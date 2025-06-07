@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Civil Engineering Chatbot</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .chat-container {
+      width: 90%;
+      max-width: 450px;
+      height: 90vh;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-header {
+      padding: 16px;
+      background-color: #004e92;
+      color: white;
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+    .chat-box {
+      flex-grow: 1;
+      padding: 16px;
+      overflow-y: auto;
+    }
+    .message {
+      margin-bottom: 12px;
+    }
+    .user {
+      text-align: right;
+      color: #1a1a1a;
+    }
+    .bot {
+      text-align: left;
+      color: #004e92;
+    }
+    .chat-input {
+      display: flex;
+      padding: 12px;
+      border-top: 1px solid #ccc;
+    }
+    .chat-input input {
+      flex-grow: 1;
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    .chat-input button {
+      margin-left: 8px;
+      padding: 8px 16px;
+      background-color: #004e92;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .chat-input button:hover {
+      background-color: #003366;
+    }
+    .menu {
+      padding: 12px;
+      background-color: #f9f9f9;
+      text-align: center;
+      border-top: 1px solid #eee;
+    }
+    .menu button {
+      margin: 6px;
+      padding: 10px 16px;
+      background-color: #e0e7ff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    .menu button:hover {
+      background-color: #c7d2fe;
+    }
+    .suggestions {
+      margin-top: 8px;
+      text-align: center;
+    }
+    .suggestions button {
+      margin: 4px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      border: none;
+      border-radius: 6px;
+      background-color: #e6f0ff;
+      cursor: pointer;
+    }
+    @media (max-width: 500px) {
+      .chat-container {
+        width: 100%;
+        height: 100vh;
+        border-radius: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">Civil Engineering Chatbot</div>
+    <div class="chat-box" id="chat-box"></div>
+    <div class="menu" id="menu"></div>
+    <div class="chat-input">
+      <input type="text" id="user-input" placeholder="Type your question..." />
+      <button onclick="handleUserInput()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const subjects = [
+      "Structural Engineering",
+      "Geotechnical Engineering",
+      "Transportation Engineering",
+      "Environmental Engineering",
+      "Construction Management"
+    ];
+
+    const questions = [
+      { subject: "Structural Engineering", question: "What is the difference between RCC and PCC?", answer: "RCC (Reinforced Cement Concrete) includes steel reinforcement, while PCC (Plain Cement Concrete) does not." },
+      { subject: "Geotechnical Engineering", question: "What is soil compaction?", answer: "Soil compaction is the process of increasing soil density by reducing air gaps through mechanical means." },
+      { subject: "Transportation Engineering", question: "What is camber in roads?", answer: "Camber is the cross slope provided to road surfaces to drain off rainwater." },
+      { subject: "Environmental Engineering", question: "What is BOD?", answer: "BOD (Biochemical Oxygen Demand) measures the amount of oxygen required by microorganisms to decompose organic matter in water." },
+      { subject: "Construction Management", question: "What is critical path in project management?", answer: "It’s the sequence of activities that determines the minimum project duration." },
+      // Add more later as needed...
+    ];
+
+    const followUps = {
+      "What is the difference between RCC and PCC?": ["Give an example of RCC.", "Where is PCC used?"],
+      "What is soil compaction?": ["Why is soil compaction important?", "Which equipment is used for compaction?"],
+      "What is camber in roads?": ["What is the standard camber value?", "How is camber measured?"],
+      "What is BOD?": ["What is the ideal BOD for drinking water?", "How is BOD tested?"],
+      "What is critical path in project management?": ["How do you identify the critical path?", "Can the critical path change?"]
+    };
+
+    function appendMessage(sender, text) {
+      const box = document.getElementById("chat-box");
+      const messageDiv = document.createElement("div");
+      messageDiv.className = `message ${sender}`;
+      messageDiv.textContent = text;
+      box.appendChild(messageDiv);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function showSubjectMenu() {
+      const menu = document.getElementById("menu");
+      menu.innerHTML = "<strong>Select a subject:</strong><br/>";
+      subjects.forEach(subject => {
+        const btn = document.createElement("button");
+        btn.textContent = subject;
+        btn.onclick = () => showSubjectQuestions(subject);
+        menu.appendChild(btn);
+      });
+    }
+
+    function showSubjectQuestions(subject) {
+      const menu = document.getElementById("menu");
+      menu.innerHTML = `<strong>${subject} Questions:</strong><br/>`;
+      questions.filter(q => q.subject === subject).forEach(q => {
+        const btn = document.createElement("button");
+        btn.textContent = q.question;
+        btn.onclick = () => botRespond(q.question);
+        menu.appendChild(btn);
+      });
+    }
+
+    function handleUserInput() {
+      const input = document.getElementById("user-input");
+      const text = input.value.trim();
+      if (!text) return;
+      appendMessage("user", text);
+      input.value = "";
+      botRespond(text);
+    }
+
+    function botRespond(inputText) {
+      const lower = inputText.toLowerCase();
+      const match = questions.find(q =>
+        q.question.toLowerCase().includes(lower) ||
+        lower.includes(q.question.toLowerCase().split(" ")[0])
+      );
+
+      setTimeout(() => {
+        if (match) {
+          appendMessage("bot", match.answer);
+          showFollowUps(match.question);
+        } else {
+          appendMessage("bot", "Sorry, I don't have an answer for that yet. Try a question from the menu.");
+        }
+      }, 600);
+    }
+
+    function showFollowUps(mainQ) {
+      const follow = followUps[mainQ];
+      if (!follow) return;
+      const box = document.getElementById("chat-box");
+      const suggestionDiv = document.createElement("div");
+      suggestionDiv.className = "suggestions";
+      follow.forEach(q => {
+        const btn = document.createElement("button");
+        btn.textContent = q;
+        btn.onclick = () => {
+          appendMessage("user", q);
+          botRespond(q);
+        };
+        suggestionDiv.appendChild(btn);
+      });
+      box.appendChild(suggestionDiv);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    // Initial
+    window.onload = () => {
+      appendMessage("bot", "Oh hi! I'm here to help with all your Civil Engineering doubts.");
+      showSubjectMenu();
+    };
+  </script>
+</body>
+</html>
