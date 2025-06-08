@@ -1,237 +1,818 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Civil Engineering Chatbot</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Civil Engineering Q&A Bot</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f0f4f8;
+      font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      background-color: #f5f5f5;
     }
+
     .chat-container {
-      width: 90%;
-      max-width: 450px;
-      height: 90vh;
-      background-color: #fff;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      display: flex;
-      flex-direction: column;
+      max-width: 600px;
+      margin: 20px auto;
+      border: 1px solid #ddd;
+      border-radius: 10px;
       overflow: hidden;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
+
     .chat-header {
-      padding: 16px;
-      background-color: #004e92;
+      background-color: #4CAF50;
       color: white;
+      padding: 15px;
       text-align: center;
-      font-size: 1.25rem;
+    }
+
+    .chat-messages {
+      height: 400px;
+      padding: 15px;
+      overflow-y: auto;
+      background-color: white;
+    }
+
+    .message {
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 5px;
+      max-width: 80%;
+    }
+
+    .bot-message {
+      background-color: #e1f5fe;
+      align-self: flex-start;
+    }
+
+    .user-message {
+      background-color: #dcedc8;
+      align-self: flex-end;
+      margin-left: auto;
+    }
+
+    .suggested-question {
+      color: #1565C0;
+      cursor: pointer;
+      margin: 5px 0;
+      padding: 5px;
+      border-radius: 3px;
+      background-color: #e3f2fd;
+      display: inline-block;
+    }
+
+    .nav-button {
+      color: #4CAF50;
+      cursor: pointer;
+      margin: 5px 0;
+      padding: 5px;
+      border-radius: 3px;
+      background-color: #f1f8e9;
+      display: inline-block;
       font-weight: bold;
     }
-    .chat-box {
-      flex-grow: 1;
-      padding: 16px;
-      overflow-y: auto;
-    }
-    .message {
-      margin-bottom: 12px;
-    }
-    .user {
-      text-align: right;
-      color: #1a1a1a;
-    }
-    .bot {
-      text-align: left;
-      color: #004e92;
-    }
+
     .chat-input {
       display: flex;
-      padding: 12px;
-      border-top: 1px solid #ccc;
+      padding: 10px;
+      background-color: #f5f5f5;
     }
-    .chat-input input {
-      flex-grow: 1;
-      padding: 8px 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 1rem;
+
+    #user-input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
     }
-    .chat-input button {
-      margin-left: 8px;
-      padding: 8px 16px;
-      background-color: #004e92;
+
+    #send-btn {
+      padding: 10px 15px;
+      margin-left: 10px;
+      background-color: #4CAF50;
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 5px;
       cursor: pointer;
     }
-    .chat-input button:hover {
-      background-color: #003366;
-    }
-    .menu {
-      padding: 12px;
-      background-color: #f9f9f9;
-      text-align: center;
-      border-top: 1px solid #eee;
-    }
-    .menu button {
-      margin: 6px;
-      padding: 10px 16px;
-      background-color: #e0e7ff;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.95rem;
-      cursor: pointer;
-    }
-    .menu button:hover {
-      background-color: #c7d2fe;
-    }
-    .suggestions {
-      margin-top: 8px;
-      text-align: center;
-    }
-    .suggestions button {
-      margin: 4px;
-      padding: 6px 12px;
-      font-size: 0.85rem;
-      border: none;
-      border-radius: 6px;
-      background-color: #e6f0ff;
-      cursor: pointer;
-    }
-    @media (max-width: 500px) {
-      .chat-container {
-        width: 100%;
-        height: 100vh;
-        border-radius: 0;
-      }
+
+    #send-btn:hover {
+      background-color: #45a049;
     }
   </style>
 </head>
 <body>
   <div class="chat-container">
-    <div class="chat-header">Civil Engineering Chatbot</div>
-    <div class="chat-box" id="chat-box"></div>
-    <div class="menu" id="menu"></div>
+    <div class="chat-header">
+      <h1>🏗️ Civil Engineering Q&A Bot</h1>
+    </div>
+    <div class="chat-messages" id="chat-messages">
+      <!-- Messages appear here -->
+    </div>
     <div class="chat-input">
-      <input type="text" id="user-input" placeholder="Type your question..." />
-      <button onclick="handleUserInput()">Send</button>
+      <input type="text" id="user-input" placeholder="Type 'hi' to start...">
+      <button id="send-btn">Send</button>
     </div>
   </div>
 
   <script>
-    const subjects = [
-      "Structural Engineering",
-      "Geotechnical Engineering",
-      "Transportation Engineering",
-      "Environmental Engineering",
-      "Construction Management"
-    ];
-
-    const questions = [
-      { subject: "Structural Engineering", question: "What is the difference between RCC and PCC?", answer: "RCC (Reinforced Cement Concrete) includes steel reinforcement, while PCC (Plain Cement Concrete) does not." },
-      { subject: "Geotechnical Engineering", question: "What is soil compaction?", answer: "Soil compaction is the process of increasing soil density by reducing air gaps through mechanical means." },
-      { subject: "Transportation Engineering", question: "What is camber in roads?", answer: "Camber is the cross slope provided to road surfaces to drain off rainwater." },
-      { subject: "Environmental Engineering", question: "What is BOD?", answer: "BOD (Biochemical Oxygen Demand) measures the amount of oxygen required by microorganisms to decompose organic matter in water." },
-      { subject: "Construction Management", question: "What is critical path in project management?", answer: "It’s the sequence of activities that determines the minimum project duration." },
-      // Add more later as needed...
-    ];
-
-    const followUps = {
-      "What is the difference between RCC and PCC?": ["Give an example of RCC.", "Where is PCC used?"],
-      "What is soil compaction?": ["Why is soil compaction important?", "Which equipment is used for compaction?"],
-      "What is camber in roads?": ["What is the standard camber value?", "How is camber measured?"],
-      "What is BOD?": ["What is the ideal BOD for drinking water?", "How is BOD tested?"],
-      "What is critical path in project management?": ["How do you identify the critical path?", "Can the critical path change?"]
+    // Complete data for all subjects
+    const subjects = {
+      "Structural Engineering": {
+        questions: [
+          {
+            q: "What is the difference between RCC and PCC?",
+            a: "RCC contains steel reinforcement; PCC does not.",
+            followups: [
+              { q: "Why is steel used in RCC?", a: "Steel has high tensile strength and adheres well to concrete." },
+              { q: "Where is PCC generally used?", a: "PCC is used in flooring, pavements, and leveling surfaces." }
+            ]
+          },
+          {
+            q: "What is a cantilever beam?",
+            a: "A beam fixed at one end and free at the other.",
+            followups: [
+              { q: "Where are cantilever beams commonly used?", a: "In balconies and overhanging structures." },
+              { q: "What are the stresses in a cantilever beam?", a: "High bending moment at the fixed end." }
+            ]
+          },
+          {
+            q: "What is a column?",
+            a: "A vertical structural member designed to carry compressive loads.",
+            followups: [
+              { q: "What is the slenderness ratio?", a: "Ratio of column height to its least radius of gyration." },
+              { q: "Types of columns?", a: "Short, long, tied, spiral, and composite columns." }
+            ]
+          },
+          {
+            q: "What is the purpose of stirrups in beams?",
+            a: "To resist shear forces.",
+            followups: [
+              { q: "What are stirrups made of?", a: "Steel bars bent in U or closed loop shapes." },
+              { q: "How are they placed?", a: "At regular spacing along the beam length." }
+            ]
+          },
+          {
+            q: "Define the term 'modulus of elasticity'.",
+            a: "It is the ratio of stress to strain.",
+            followups: [
+              { q: "What is its unit?", a: "N/mm² or MPa." },
+              { q: "Why is it important?", a: "It helps in calculating deformation." }
+            ]
+          },
+          {
+            q: "What is prestressed concrete?",
+            a: "Concrete in which internal stresses are introduced to counter external loads.",
+            followups: [
+              { q: "Where is it used?", a: "Bridges, flyovers, and heavy load structures." },
+              { q: "How is it done?", a: "By tensioning steel tendons before or after casting." }
+            ]
+          },
+          {
+            q: "Difference between one-way and two-way slabs?",
+            a: "One-way slab bends in one direction; two-way bends in both.",
+            followups: [
+              { q: "What determines slab type?", a: "Ratio of longer to shorter span." },
+              { q: "Minimum thickness for slabs?", a: "Typically 100 mm for residential buildings." }
+            ]
+          },
+          {
+            q: "What is the factor of safety?",
+            a: "Ratio of ultimate load to permissible load.",
+            followups: [
+              { q: "Why use it?", a: "To ensure design reliability." },
+              { q: "Common values?", a: "1.5 to 3 depending on materials." }
+            ]
+          },
+          {
+            q: "What are fixed, simply supported, and continuous beams?",
+            a: "Beams differ based on support conditions.",
+            followups: [
+              { q: "Which is most efficient?", a: "Continuous beams are structurally efficient." },
+              { q: "What is a propped cantilever?", a: "Cantilever with an additional support." }
+            ]
+          },
+          {
+            q: "Define bending moment.",
+            a: "The internal moment that causes a section to bend.",
+            followups: [
+              { q: "Where is it maximum in simply supported beam?", a: "At the center." },
+              { q: "Unit of bending moment?", a: "kNm or Nmm." }
+            ]
+          },
+          {
+            q: "What is deflection in beams?",
+            a: "The displacement of a beam under load.",
+            followups: [
+              { q: "What controls it?", a: "Material properties, loading, and geometry." },
+              { q: "What is allowable deflection?", a: "Span/250 for general use." }
+            ]
+          },
+          {
+            q: "What is lateral-torsional buckling?",
+            a: "Buckling due to lateral deflection and twisting.",
+            followups: [
+              { q: "Where does it occur?", a: "In unbraced beams under flexure." },
+              { q: "How to prevent it?", a: "Use lateral supports." }
+            ]
+          },
+          {
+            q: "What is creep in concrete?",
+            a: "Time-dependent deformation under sustained load.",
+            followups: [
+              { q: "What affects it?", a: "Load magnitude, temperature, moisture." },
+              { q: "Is it reversible?", a: "Partially." }
+            ]
+          },
+          {
+            q: "What are construction joints?",
+            a: "Joints between concrete pours.",
+            followups: [
+              { q: "When are they used?", a: "When work is interrupted." },
+              { q: "Should reinforcement be continuous?", a: "Yes, across the joint." }
+            ]
+          },
+          {
+            q: "What is a shear force diagram (SFD)?",
+            a: "Graphical representation of shear force along a beam.",
+            followups: [
+              { q: "What does it show?", a: "Magnitude and direction of shear." },
+              { q: "When is shear zero?", a: "At maximum bending moment." }
+            ]
+          }
+        ]
+      },
+      "Geotechnical Engineering": {
+        questions: [
+          {
+            q: "What is soil compaction?",
+            a: "Increasing soil density by removing air voids.",
+            followups: [
+              { q: "Why is compaction important?", a: "It increases bearing capacity and reduces settlement." },
+              { q: "What are common methods?", a: "Rolling, tamping, and vibration." }
+            ]
+          },
+          {
+            q: "What is bearing capacity of soil?",
+            a: "Maximum load a soil can support without failure.",
+            followups: [
+              { q: "How is it determined?", a: "By plate load test or Terzaghi's method." },
+              { q: "What factors affect it?", a: "Soil type, water table, and foundation width." }
+            ]
+          },
+          {
+            q: "What is consolidation?",
+            a: "Time-dependent settlement due to expulsion of water.",
+            followups: [
+              { q: "In which soils is it significant?", a: "Clay soils." },
+              { q: "How is it measured?", a: "Using oedometer test." }
+            ]
+          },
+          {
+            q: "Difference between cohesion and frictional soils?",
+            a: "Cohesive soils stick together (like clay), frictional rely on particle interlock (like sand).",
+            followups: [
+              { q: "Which has better drainage?", a: "Frictional soils." },
+              { q: "Which has more settlement issues?", a: "Cohesive soils." }
+            ]
+          },
+          {
+            q: "What is the water table?",
+            a: "Upper level of groundwater in soil.",
+            followups: [
+              { q: "Why is it important in construction?", a: "Affects bearing capacity and excavation." },
+              { q: "How is it controlled?", a: "Using dewatering techniques." }
+            ]
+          },
+          {
+            q: "What are soil classification systems?",
+            a: "Systems like USCS or IS for categorizing soils.",
+            followups: [
+              { q: "What does USCS stand for?", a: "Unified Soil Classification System." },
+              { q: "What parameters are used?", a: "Grain size, plasticity, and liquid limit." }
+            ]
+          },
+          {
+            q: "What is permeability of soil?",
+            a: "Measure of ability to transmit water.",
+            followups: [
+              { q: "How is it tested?", a: "Constant or falling head test." },
+              { q: "Which soil is most permeable?", a: "Gravel." }
+            ]
+          },
+          {
+            q: "Define Atterberg limits.",
+            a: "Limits to define soil consistency.",
+            followups: [
+              { q: "What are they?", a: "Liquid limit, plastic limit, shrinkage limit." },
+              { q: "Why are they useful?", a: "Help in soil classification." }
+            ]
+          },
+          {
+            q: "What is a retaining wall?",
+            a: "A structure to hold back soil.",
+            followups: [
+              { q: "What forces act on it?", a: "Lateral earth pressure." },
+              { q: "Types of retaining walls?", a: "Gravity, cantilever, anchored, and counterfort." }
+            ]
+          },
+          {
+            q: "What is a Standard Penetration Test (SPT)?",
+            a: "In-situ test to determine soil strength.",
+            followups: [
+              { q: "What does N-value indicate?", a: "Soil resistance to penetration." },
+              { q: "What is used for?", a: "Foundation design." }
+            ]
+          },
+          {
+            q: "What is liquefaction?",
+            a: "Sudden loss of strength in saturated soil during earthquake.",
+            followups: [
+              { q: "Which soils are prone?", a: "Loose saturated sands." },
+              { q: "How to prevent it?", a: "Compaction or grouting." }
+            ]
+          },
+          {
+            q: "What is an embankment?",
+            a: "Raised structure made of soil or rock.",
+            followups: [
+              { q: "Where is it used?", a: "Highways, railways." },
+              { q: "Stability concerns?", a: "Slippage or seepage." }
+            ]
+          },
+          {
+            q: "What is a geotextile?",
+            a: "Synthetic material used in soil engineering.",
+            followups: [
+              { q: "Uses?", a: "Filtration, separation, reinforcement." },
+              { q: "Types?", a: "Woven, non-woven." }
+            ]
+          },
+          {
+            q: "What is an earth pressure?",
+            a: "Pressure exerted by soil on a structure.",
+            followups: [
+              { q: "Types?", a: "Active, passive, and at-rest." },
+              { q: "Who's theory is used?", a: "Rankine or Coulomb." }
+            ]
+          },
+          {
+            q: "What is slope stability?",
+            a: "Resistance of soil slope to failure.",
+            followups: [
+              { q: "Causes of failure?", a: "Rainfall, loading, poor drainage." },
+              { q: "Methods of improvement?", a: "Drainage, retaining walls, soil nailing." }
+            ]
+          }
+        ]
+      },
+      "Transportation Engineering": {
+        questions: [
+          {
+            q: "What are the different modes of transportation?",
+            a: "Road, rail, air, water, and pipeline.",
+            followups: [
+              { q: "Which mode is most economical for short distances?", a: "Road transport." },
+              { q: "What factors affect the choice of transportation mode?", a: "Cost, speed, cargo type, and distance." }
+            ]
+          },
+          {
+            q: "What is pavement?",
+            a: "A layered structure that supports traffic loads and distributes them to the subgrade.",
+            followups: [
+              { q: "What are the types of pavements?", a: "Flexible and rigid pavements." },
+              { q: "What are the main components of pavement?", a: "Subgrade, sub-base, base course, and surface course." }
+            ]
+          },
+          {
+            q: "What is traffic volume?",
+            a: "The number of vehicles passing a point on a road during a specific time period.",
+            followups: [
+              { q: "Why is traffic volume measurement important?", a: "For planning, design, and traffic management." },
+              { q: "What is meant by peak hour volume?", a: "The highest number of vehicles counted during one hour in a day." }
+            ]
+          },
+          {
+            q: "What is the importance of geometric design in highways?",
+            a: "It ensures safety, comfort, and efficient traffic flow.",
+            followups: [
+              { q: "What are the key elements of geometric design?", a: "Horizontal and vertical alignment, cross-section, and sight distance." },
+              { q: "What is camber and why is it important?", a: "Camber is the cross slope of the road surface for drainage." }
+            ]
+          },
+          {
+            q: "Define Level of Service (LOS).",
+            a: "A qualitative measure describing operational conditions of traffic flow.",
+            followups: [
+              { q: "What are LOS grades?", a: "Ranging from A (best) to F (worst)." },
+              { q: "What factors influence LOS?", a: "Traffic volume, speed, density, and driver comfort." }
+            ]
+          },
+          {
+            q: "What is a road safety audit?",
+            a: "A formal process to evaluate road safety for existing or planned roads.",
+            followups: [
+              { q: "When is a road safety audit conducted?", a: "During planning, design, construction, or operation phases." },
+              { q: "What does the audit typically include?", a: "Identifying hazards and recommending improvements." }
+            ]
+          },
+          {
+            q: "What is the purpose of traffic signals?",
+            a: "To regulate traffic flow and increase safety at intersections.",
+            followups: [
+              { q: "What types of traffic signals are commonly used?", a: "Fixed time, actuated, and coordinated signals." },
+              { q: "What is a signal cycle?", a: "The total time taken to complete one sequence of signal phases." }
+            ]
+          },
+          {
+            q: "What causes pavement deterioration?",
+            a: "Traffic loads, weather effects, and poor construction materials.",
+            followups: [
+              { q: "How can pavement deterioration be prevented?", a: "Through regular maintenance and timely overlays." },
+              { q: "What are common pavement distresses?", a: "Cracking, rutting, and potholes." }
+            ]
+          },
+          {
+            q: "What is a highway cross-section?",
+            a: "A view of the road perpendicular to its alignment showing layers and shoulders.",
+            followups: [
+              { q: "What are the main parts of a highway cross-section?", a: "Carriageway, shoulders, and roadside." },
+              { q: "What is the function of shoulders?", a: "To provide support to stopped vehicles and assist drainage." }
+            ]
+          },
+          {
+            q: "What is traffic congestion?",
+            a: "A situation where traffic demand exceeds road capacity.",
+            followups: [
+              { q: "What are effects of congestion?", a: "Increased travel time, fuel consumption, and pollution." },
+              { q: "How can congestion be mitigated?", a: "Traffic management, public transport improvements, and infrastructure expansion." }
+            ]
+          },
+          {
+            q: "What is the difference between absolute and relative gradient?",
+            a: "Absolute gradient is the total slope over a distance; relative is slope between two points.",
+            followups: [
+              { q: "Why is gradient important in road design?", a: "It affects vehicle speed and safety." },
+              { q: "What is the maximum desirable gradient for highways?", a: "Typically 5-7%." }
+            ]
+          },
+          {
+            q: "What is the role of Intelligent Transportation Systems (ITS)?",
+            a: "Use of technology to improve traffic management and safety.",
+            followups: [
+              { q: "Give examples of ITS applications.", a: "Traffic sensors, dynamic message signs, and real-time traffic monitoring." },
+              { q: "What are the benefits of ITS?", a: "Reduced congestion, improved safety, and better traveler information." }
+            ]
+          },
+          {
+            q: "What is the purpose of parking studies?",
+            a: "To assess parking demand and supply in an area.",
+            followups: [
+              { q: "What data is collected during parking studies?", a: "Occupancy rates, duration of stay, and turnover." },
+              { q: "How is parking study data used?", a: "To inform parking policies and design parking facilities." }
+            ]
+          },
+          {
+            q: "What factors influence road accidents?",
+            a: "Speeding, poor road conditions, driver behavior, and vehicle conditions.",
+            followups: [
+              { q: "How can road accidents be reduced?", a: "Better road design, enforcement of traffic laws, and public awareness." },
+              { q: "What is the role of road signage?", a: "To warn, guide, and regulate drivers." }
+            ]
+          },
+          {
+            q: "What is pavement design?",
+            a: "The process of determining pavement thickness and materials to support traffic.",
+            followups: [
+              { q: "What are common pavement design methods?", a: "Empirical, mechanistic-empirical, and mechanistic methods." },
+              { q: "What factors influence pavement design?", a: "Traffic load, subgrade soil, climate, and materials used." }
+            ]
+          }
+        ]
+      },
+      "Environmental Engineering": {
+        questions: [
+          {
+            q: "What is environmental engineering?",
+            a: "It is the branch of engineering that focuses on protecting the environment by reducing pollution and promoting sustainable practices.",
+            followups: [
+              { q: "What are the main areas of environmental engineering?", a: "Water and wastewater treatment, air pollution control, solid waste management, and environmental impact assessment." },
+              { q: "Why is environmental engineering important?", a: "To ensure safe water, air quality, and reduce health risks." }
+            ]
+          },
+          {
+            q: "What is wastewater treatment?",
+            a: "The process of removing contaminants from sewage or industrial wastewater to make it safe for disposal or reuse.",
+            followups: [
+              { q: "What are the main stages of wastewater treatment?", a: "Primary, secondary, and tertiary treatment." },
+              { q: "What is the purpose of secondary treatment?", a: "To biologically degrade dissolved organic matter." }
+            ]
+          },
+          {
+            q: "What is the difference between point source and non-point source pollution?",
+            a: "Point source pollution comes from a specific, identifiable source; non-point source is diffuse, such as runoff.",
+            followups: [
+              { q: "Give examples of point source pollution.", a: "Effluent discharge from a factory or sewage treatment plant." },
+              { q: "Why is non-point source pollution harder to control?", a: "Because it comes from multiple sources and spreads over a wide area." }
+            ]
+          },
+          {
+            q: "What are the common methods of solid waste disposal?",
+            a: "Landfilling, incineration, composting, and recycling.",
+            followups: [
+              { q: "What is sanitary landfill?", a: "A method of waste disposal where waste is buried in a controlled manner with protective measures." },
+              { q: "What are the advantages of recycling?", a: "Reduces waste volume, conserves resources, and saves energy." }
+            ]
+          },
+          {
+            q: "What is air pollution?",
+            a: "The presence of harmful substances in the atmosphere that can affect health and environment.",
+            followups: [
+              { q: "What are common air pollutants?", a: "Particulate matter, sulfur dioxide, nitrogen oxides, carbon monoxide." },
+              { q: "How can air pollution be controlled?", a: "Using filters, scrubbers, and cleaner fuels." }
+            ]
+          },
+          {
+            q: "What is the role of a settling tank in water treatment?",
+            a: "To allow suspended solids to settle out by gravity.",
+            followups: [
+              { q: "What factors affect settling velocity?", a: "Particle size, shape, and density, as well as fluid viscosity." },
+              { q: "What is sludge in settling tanks?", a: "The accumulated solids that settle at the bottom." }
+            ]
+          },
+          {
+            q: "What is the BOD test?",
+            a: "Biochemical Oxygen Demand measures the amount of oxygen consumed by microorganisms to decompose organic matter in water.",
+            followups: [
+              { q: "Why is BOD important in water quality?", a: "It indicates the level of organic pollution." },
+              { q: "What does a high BOD value mean?", a: "High pollution and oxygen demand, harmful for aquatic life." }
+            ]
+          },
+          {
+            q: "What are greenhouse gases?",
+            a: "Gases that trap heat in the earth's atmosphere, contributing to global warming.",
+            followups: [
+              { q: "Name major greenhouse gases.", a: "Carbon dioxide, methane, nitrous oxide, and fluorinated gases." },
+              { q: "How can greenhouse gas emissions be reduced?", a: "Using renewable energy, improving energy efficiency, and carbon capture." }
+            ]
+          },
+          {
+            q: "What is an aerobic treatment process?",
+            a: "Wastewater treatment involving microorganisms that require oxygen to break down organic matter.",
+            followups: [
+              { q: "What is a common aerobic treatment method?", a: "Activated sludge process." },
+              { q: "How does aerobic treatment differ from anaerobic?", a: "Anaerobic occurs without oxygen and produces methane." }
+            ]
+          },
+          {
+            q: "What is the importance of water quality standards?",
+            a: "To ensure water is safe for human consumption and ecological health.",
+            followups: [
+              { q: "Name a common water quality standard organization.", a: "World Health Organization (WHO)." },
+              { q: "What parameters are typically tested in water quality?", a: "pH, turbidity, microbial content, heavy metals." }
+            ]
+          },
+          {
+            q: "What is composting?",
+            a: "The biological decomposition of organic waste into nutrient-rich soil conditioner.",
+            followups: [
+              { q: "What are the main stages of composting?", a: "Mesophilic, thermophilic, cooling, and maturation stages." },
+              { q: "What conditions favor composting?", a: "Adequate moisture, oxygen, and temperature." }
+            ]
+          },
+          {
+            q: "What is the significance of pH in water?",
+            a: "It indicates the acidity or alkalinity of water, affecting its suitability for use.",
+            followups: [
+              { q: "What is the ideal pH range for drinking water?", a: "6.5 to 8.5." },
+              { q: "How does pH affect metal solubility in water?", a: "Low pH increases metal solubility, leading to toxicity." }
+            ]
+          },
+          {
+            q: "What is a constructed wetland?",
+            a: "Engineered system that uses natural processes involving wetland vegetation to treat wastewater.",
+            followups: [
+              { q: "What are benefits of constructed wetlands?", a: "Low-cost, sustainable wastewater treatment." },
+              { q: "What pollutants can wetlands remove?", a: "Nutrients, suspended solids, and pathogens." }
+            ]
+          },
+          {
+            q: "What is the role of chlorination in water treatment?",
+            a: "To disinfect water by killing pathogens.",
+            followups: [
+              { q: "What are disadvantages of chlorination?", a: "Formation of harmful by-products like trihalomethanes." },
+              { q: "What are alternative disinfection methods?", a: "UV radiation and ozone treatment." }
+            ]
+          },
+          {
+            q: "What is environmental impact assessment (EIA)?",
+            a: "A process to evaluate the potential environmental effects of a proposed project before it proceeds.",
+            followups: [
+              { q: "What are the stages of EIA?", a: "Screening, scoping, impact analysis, mitigation, and monitoring." },
+              { q: "Why is public participation important in EIA?", a: "To incorporate community concerns and improve decision-making." }
+            ]
+          }
+        ]
+      },
+      "Construction Management": {
+        questions: [
+          {
+            q: "What is construction management?",
+            a: "It is the planning, coordination, and control of a construction project from start to finish to meet client requirements.",
+            followups: [
+              { q: "What are the main phases of construction management?", a: "Planning, design, procurement, construction, and commissioning." },
+              { q: "What skills are essential for a construction manager?", a: "Leadership, communication, scheduling, budgeting, and problem-solving." }
+            ]
+          },
+          {
+            q: "What is a construction schedule?",
+            a: "A timeline that outlines the start and finish dates for project activities.",
+            followups: [
+              { q: "What tools are used for scheduling?", a: "Gantt charts and Critical Path Method (CPM)." },
+              { q: "Why is scheduling important?", a: "To ensure timely completion and resource optimization." }
+            ]
+          },
+          {
+            q: "What is the critical path in project management?",
+            a: "The longest sequence of activities that must be completed on time for the project to finish on schedule.",
+            followups: [
+              { q: "How do delays on the critical path affect the project?", a: "They directly delay the project completion." },
+              { q: "What is a float or slack in scheduling?", a: "The amount of time an activity can be delayed without affecting the project." }
+            ]
+          },
+          {
+            q: "What is the role of a project budget?",
+            a: "To estimate and control the costs of the project.",
+            followups: [
+              { q: "What are common components of a construction budget?", a: "Labor, materials, equipment, overhead, and contingencies." },
+              { q: "How can cost overruns be prevented?", a: "Through accurate estimation and continuous monitoring." }
+            ]
+          },
+          {
+            q: "What is a bill of quantities (BOQ)?",
+            a: "A document listing materials, parts, and labor needed for construction with estimated costs.",
+            followups: [
+              { q: "Who prepares the BOQ?", a: "Quantity surveyors or estimators." },
+              { q: "Why is BOQ important?", a: "For tendering, budgeting, and payment purposes." }
+            ]
+          },
+          {
+            q: "What is procurement in construction?",
+            a: "The process of obtaining materials, equipment, and services needed for the project.",
+            followups: [
+              { q: "What are different procurement methods?", a: "Traditional, design-build, construction management, and turnkey." },
+              { q: "What factors influence procurement choice?", a: "Project complexity, cost, and time constraints." }
+            ]
+          },
+          {
+            q: "What is quality control in construction?",
+            a: "Ensuring that construction work meets specified standards and requirements.",
+            followups: [
+              { q: "What are common quality control techniques?", a: "Inspections, testing, and audits." },
+              { q: "How does quality control differ from quality assurance?", a: "QC is about detecting defects, QA is about preventing them." }
+            ]
+          },
+          {
+            q: "What is safety management in construction?",
+            a: "Practices to protect workers and the public from accidents and injuries on site.",
+            followups: [
+              { q: "What are common safety hazards on construction sites?", a: "Falls, electrical hazards, and equipment accidents." },
+              { q: "What safety measures are commonly used?", a: "Personal protective equipment (PPE), safety training, and signage." }
+            ]
+          },
+          {
+            q: "What is a construction contract?",
+            a: "A legally binding agreement between parties outlining project scope, responsibilities, and terms.",
+            followups: [
+              { q: "What are common types of contracts?", a: "Lump sum, cost-plus, unit price, and time and materials." },
+              { q: "Why is contract management important?", a: "To avoid disputes and ensure project delivery as agreed." }
+            ]
+          },
+          {
+            q: "What is resource management in construction?",
+            a: "Planning and controlling labor, equipment, and materials to optimize productivity.",
+            followups: [
+              { q: "What tools help in resource management?", a: "Resource leveling and allocation software." },
+              { q: "What problems arise from poor resource management?", a: "Delays, cost overruns, and reduced quality." }
+            ]
+          },
+          {
+            q: "What is the role of a site engineer?",
+            a: "To supervise construction activities and ensure work follows design and specifications.",
+            followups: [
+              { q: "What are typical responsibilities of a site engineer?", a: "Site layout, progress monitoring, and quality checks." },
+              { q: "How does a site engineer coordinate with other professionals?", a: "Through regular meetings and reporting." }
+            ]
+          },
+          {
+            q: "What is value engineering?",
+            a: "A systematic method to improve project value by optimizing cost and performance.",
+            followups: [
+              { q: "When is value engineering applied?", a: "During design or construction phases to reduce costs without affecting quality." },
+              { q: "Give an example of value engineering.", a: "Substituting a less expensive material with similar performance." }
+            ]
+          },
+          {
+            q: "What is risk management in construction?",
+            a: "Identifying, analyzing, and mitigating risks to avoid negative impacts on a project.",
+            followups: [
+              { q: "What are common construction risks?", a: "Weather delays, cost increases, and safety incidents." },
+              { q: "How can risks be managed?", a: "Through risk assessment, contingency planning, and insurance." }
+            ]
+          },
+          {
+            q: "What is progress monitoring?",
+            a: "Tracking project work to ensure it stays on schedule and budget.",
+            followups: [
+              { q: "What tools assist in progress monitoring?", a: "Project management software and periodic reports." },
+              { q: "Why is progress monitoring critical?", a: "To identify delays early and take corrective actions." }
+            ]
+          },
+          {
+            q: "What is the importance of communication in construction management?",
+            a: "Effective communication ensures coordination and reduces misunderstandings.",
+            followups: [
+              { q: "What communication methods are used on construction projects?", a: "Meetings, emails, reports, and site instructions." },
+              { q: "How does poor communication affect projects?", a: "Causes delays, cost overruns, and disputes." }
+            ]
+          }
+        ]
+      }
     };
 
-    function appendMessage(sender, text) {
-      const box = document.getElementById("chat-box");
-      const messageDiv = document.createElement("div");
-      messageDiv.className = `message ${sender}`;
-      messageDiv.textContent = text;
-      box.appendChild(messageDiv);
-      box.scrollTop = box.scrollHeight;
+    // Chat state management
+    const chatState = {
+      currentSubject: null,
+      currentQuestions: [],
+      previousState: null // For back navigation
+    };
+
+    // DOM elements
+    const chatMessages = document.getElementById('chat-messages');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    // Add a message to the chat
+    function addMessage(sender, message, isSuggested = false, isNav = false) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${sender}-message`;
+      
+      if (isSuggested) {
+        messageDiv.classList.add('suggested-question');
+        messageDiv.onclick = () => handleSuggestedQuestion(message);
+      } else if (isNav) {
+        messageDiv.classList.add('nav-button');
+        messageDiv.onclick = () => handleNavigation(message);
+      }
+      
+      messageDiv.textContent = message;
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    function showSubjectMenu() {
-      const menu = document.getElementById("menu");
-      menu.innerHTML = "<strong>Select a subject:</strong><br/>";
-      subjects.forEach(subject => {
-        const btn = document.createElement("button");
-        btn.textContent = subject;
-        btn.onclick = () => showSubjectQuestions(subject);
-        menu.appendChild(btn);
-      });
-    }
-
-    function showSubjectQuestions(subject) {
-      const menu = document.getElementById("menu");
-      menu.innerHTML = `<strong>${subject} Questions:</strong><br/>`;
-      questions.filter(q => q.subject === subject).forEach(q => {
-        const btn = document.createElement("button");
-        btn.textContent = q.question;
-        btn.onclick = () => botRespond(q.question);
-        menu.appendChild(btn);
-      });
-    }
-
+    // Handle user input
     function handleUserInput() {
-      const input = document.getElementById("user-input");
-      const text = input.value.trim();
-      if (!text) return;
-      appendMessage("user", text);
-      input.value = "";
-      botRespond(text);
+      const input = userInput.value.trim();
+      if (!input) return;
+
+      addMessage('user', input);
+      userInput.value = '';
+
+      if (input.toLowerCase() === 'hi' || input.toLowerCase() === 'menu') {
+        showMainMenu();
+      } else if (!chatState.currentSubject) {
+        selectSubject(input);
+      } else {
+        selectQuestion(input);
+      }
     }
 
-    function botRespond(inputText) {
-      const lower = inputText.toLowerCase();
-      const match = questions.find(q =>
-        q.question.toLowerCase().includes(lower) ||
-        lower.includes(q.question.toLowerCase().split(" ")[0])
-      );
-
-      setTimeout(() => {
-        if (match) {
-          appendMessage("bot", match.answer);
-          showFollowUps(match.question);
-        } else {
-          appendMessage("bot", "Sorry, I don't have an answer for that yet. Try a question from the menu.");
-        }
-      }, 600);
+    // Show main menu
+    function showMainMenu() {
+      chatState.currentSubject = null;
+      chatState.currentQuestions = [];
+      chatState.previousState = null;
+      
+      addMessage('bot', "Welcome to Civil Engineering Q&A Bot!");
+      addMessage('bot', "Please choose a subject:");
+      addMessage('bot', "1. 🏗️ Structural Engineering");
+      addMessage('bot', "2. 🌍 Geotechnical Engineering");
+      addMessage('bot', "3. 🚦 Transportation Engineering");
+      addMessage('bot', "4. 🌱 Environmental Engineering");
+      addMessage('bot', "5. 🏢 Construction Management");
+      addMessage('bot', "Type the number or name of your chosen subject!");
+      addMessage('bot', "You can type 'back' anytime to go back.");
     }
 
-    function showFollowUps(mainQ) {
-      const follow = followUps[mainQ];
-      if (!follow) return;
-      const box = document.getElementById("chat-box");
-      const suggestionDiv = document.createElement("div");
-      suggestionDiv.className = "suggestions";
-      follow.forEach(q => {
-        const btn = document.createElement("button");
-        btn.textContent = q;
-        btn.onclick = () => {
-          appendMessage("user", q);
-          botRespond(q);
-        };
-        suggestionDiv.appendChild(btn);
-      });
-      box.appendChild(suggestionDiv);
-      box.scrollTop = box.scrollHeight;
-    }
+    // Select a subject
+    function selectSubject(input) {
+      const subjectNames = [
+        "Structural Engineering",
+        "Geotechnical Engineering",
+        "Transportation Engineering",
+        "Environmental Engineering",
+        "Construction Management"
+      ];
 
-    // Initial
-    window.onload = () => {
-      appendMessage("bot", "Oh hi! I'm here to help with all your Civil Engineering doubts.");
-      showSubjectMenu();
-    };
-  </script>
-</body>
-</html>
+    
