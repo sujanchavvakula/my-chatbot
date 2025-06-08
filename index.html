@@ -815,4 +815,126 @@
         "Construction Management"
       ];
 
-    
+      // Handle numeric input
+      const subjectIndex = parseInt(input) - 1;
+      if (subjectIndex >= 0 && subjectIndex < subjectNames.length) {
+        chatState.currentSubject = subjectNames[subjectIndex];
+        chatState.currentQuestions = subjects[chatState.currentSubject].questions;
+        chatState.previousState = "main-menu";
+        showQuestions();
+        return;
+      }
+
+      // Handle text input
+      const lowerInput = input.toLowerCase();
+      for (const subject of subjectNames) {
+        if (subject.toLowerCase().includes(lowerInput)) {
+          chatState.currentSubject = subject;
+          chatState.currentQuestions = subjects[subject].questions;
+          chatState.previousState = "main-menu";
+          showQuestions();
+          return;
+        }
+      }
+
+      // If no match found
+      addMessage('bot', "I didn't recognize that subject. Please try again or type 'menu' to see the options.");
+    }
+
+    // Show questions for current subject
+    function showQuestions() {
+      addMessage('bot', `You selected: ${chatState.currentSubject}`);
+      addMessage('bot', "Here are some common questions:");
+      
+      chatState.currentQuestions.forEach((question, index) => {
+        addMessage('bot', `${index + 1}. ${question.q}`, true);
+      });
+      
+      addMessage('bot', "Type the number or text of your question, or 'back' to return to subjects.");
+    }
+
+    // Select a question
+    function selectQuestion(input) {
+      if (input.toLowerCase() === 'back') {
+        if (chatState.previousState === "main-menu") {
+          showMainMenu();
+        } else {
+          showQuestions();
+        }
+        return;
+      }
+
+      // Handle numeric input
+      const questionIndex = parseInt(input) - 1;
+      if (questionIndex >= 0 && questionIndex < chatState.currentQuestions.length) {
+        const question = chatState.currentQuestions[questionIndex];
+        showAnswer(question);
+        return;
+      }
+
+      // Handle text input
+      const lowerInput = input.toLowerCase();
+      for (const question of chatState.currentQuestions) {
+        if (question.q.toLowerCase().includes(lowerInput)) {
+          showAnswer(question);
+          return;
+        }
+      }
+
+      // If no match found
+      addMessage('bot', "I didn't recognize that question. Please try again or type 'back' to return.");
+    }
+
+    // Show answer and follow-up questions
+    function showAnswer(question) {
+      addMessage('bot', `Q: ${question.q}`);
+      addMessage('bot', `A: ${question.a}`);
+      
+      if (question.followups && question.followups.length > 0) {
+        addMessage('bot', "Follow-up questions:");
+        question.followups.forEach(followup => {
+          addMessage('bot', followup.q, true);
+        });
+      }
+      
+      addMessage('bot', "Type 'back' to return to questions or 'menu' to start over.");
+      chatState.previousState = "questions";
+    }
+
+    // Handle suggested question click
+    function handleSuggestedQuestion(questionText) {
+      if (!chatState.currentSubject) {
+        // This is a subject selection
+        selectSubject(questionText);
+      } else {
+        // This is a question selection
+        selectQuestion(questionText);
+      }
+    }
+
+    // Handle navigation buttons
+    function handleNavigation(action) {
+      if (action === 'back') {
+        if (chatState.previousState === "main-menu") {
+          showMainMenu();
+        } else {
+          showQuestions();
+        }
+      } else if (action === 'menu') {
+        showMainMenu();
+      }
+    }
+
+    // Event listeners
+    sendBtn.addEventListener('click', handleUserInput);
+    userInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        handleUserInput();
+      }
+    });
+
+    // Initialize chat
+    showMainMenu();
+  </script>
+</body>
+</html>
